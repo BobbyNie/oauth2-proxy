@@ -32,11 +32,16 @@ ARG VERSION
 # Set the cross compilation arguments based on the TARGETPLATFORM which is
 #  automatically set by the docker engine.
 RUN make build 
-RUN cp $GOPATH/src/github.com/oauth2-proxy/oauth2-proxy /tmp/oauth2-proxy
+RUN cp $GOPATH/src/github.com/oauth2-proxy/oauth2-proxy /tmp/oauth2-proxy 
+
 
 # Copy binary to runtime image
 FROM ${RUNTIME_IMAGE}
 COPY --from=builder /tmp/oauth2-proxy /bin/oauth2-proxy
+COPY ./rootcerts/* /etc/pki/ca-trust/source/anchors/
+RUN microdnf install ca-certificates && \
+    update-ca-trust extract 
+
 #COPY --from=builder /go/src/github.com/oauth2-proxy/oauth2-proxy/jwt_signing_key.pem /etc/ssl/private/jwt_signing_key.pem
 
 ENTRYPOINT ["/bin/oauth2-proxy"]
